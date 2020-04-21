@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,6 +19,7 @@ var (
 	command string
 	registryTimes int
 	times int64
+	seconds int64
 	concurrency int
 	logFile string
 	config map[string]string
@@ -96,6 +98,7 @@ func init() {
 	flag.StringVar(&logFile, "log-file", "user", "日志文件")
 	flag.IntVar(&registryTimes, "registry-times", 10, "注册账号个数")
 	flag.Int64Var(&times, "times", 100000000000, "请求次数")
+	flag.Int64Var(&seconds, "seconds", 100000000000, "秒数(时长)")
 	flag.IntVar(&concurrency, "concurrency", 1000, "并发数")
 	config = map[string]string{
 		"host": "http://5868pc.com",
@@ -107,6 +110,7 @@ func init() {
 		"bank-add": "/user/bankAdd",
 		"money-up": "/user/moneyUp",
 		"get-money": "/game/getMoney",
+		"new-bet-info": "/newBetInfo",
 	}
 }
 
@@ -525,6 +529,39 @@ func main() {
 				}(users)
 			}
 			wg.Wait()
+		},
+		"new-bet-info-press": func() {
+			times = 0
+			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(seconds) * time.Second))
+			wg := sync.WaitGroup{}
+			for i := 0; i < concurrency; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					for  {
+						select {
+						case <-ctx.Done():
+							return
+						default:
+
+						}
+
+						// 发送请求
+						url := fmt.Sprintf("%s%s", config["host"], config["new-bet-info"])
+						_, err := http.Post(url, "application/x-www-form-urlencoded", nil)
+						if err != nil {
+							fmt.Println(err)
+							continue
+						}
+
+						//responseBytes, _ := ioutil.ReadAll(response.Body)
+						//fmt.Println(string(responseBytes))
+						atomic.AddInt64(&times, 1)
+					}
+				}()
+			}
+			wg.Wait()
+			fmt.Println(times)
 		},
 	}
 	commandHandler[command]()

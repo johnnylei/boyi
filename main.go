@@ -531,7 +531,6 @@ func main() {
 			wg.Wait()
 		},
 		"new-bet-info-press": func() {
-			times = 0
 			ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(seconds) * time.Second))
 			wg := sync.WaitGroup{}
 			for i := 0; i < concurrency; i++ {
@@ -556,12 +555,10 @@ func main() {
 
 						//responseBytes, _ := ioutil.ReadAll(response.Body)
 						//fmt.Println(string(responseBytes))
-						atomic.AddInt64(&times, 1)
 					}
 				}()
 			}
 			wg.Wait()
-			fmt.Println(times)
 		},
 	}
 	commandHandler[command]()

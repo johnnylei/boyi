@@ -64,14 +64,6 @@ type User struct {
 	TradePassword int64 `json:"trade_password"`
 }
 
-func (_self *User) InitFromLog(logString string) error  {
-	if err := json.Unmarshal([]byte(logString), _self); err != nil {
-		return err
-	}
-
-	return  nil
-}
-
 func LoadUsers(logFile string) ([]*User, error) {
 	usersBytes, err := ioutil.ReadFile(logFile)
 	if err != nil {
@@ -226,11 +218,19 @@ func main() {
 					users[index].Imei,
 					users[index].TradePassword)
 
-				_, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(data))
+				response, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(data))
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				fmt.Println(string(responseBody))
 			}
 
 			if err := DumpUsers(logFile, users); err != nil {
